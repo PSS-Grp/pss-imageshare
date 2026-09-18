@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>円柱状に並んだ12枚のカード</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+  html,body{margin:0;background:#0c0a08;}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  .cc-num{font-family:'Shippori Mincho', 'Hiragino Mincho ProN', serif;}
+  .cc-label{font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;}
+  .cc-stage{width:960px;height:680px;max-width:100%;box-sizing:border-box;position:relative;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 26%, #2c2419 0%, #16120d 58%, #0a0806 100%);}
+  .cc-title{position:absolute;top:34px;left:0;right:0;text-align:center;color:#e9dcc0;}
+  .cc-eyebrow{font-size:12px;letter-spacing:0.4em;color:#b79a63;text-transform:uppercase;}
+  .cc-headline{font-size:21px;margin-top:6px;color:#f3e7cf;font-weight:500;}
+  .cc-shadow{position:absolute;left:50%;top:59%;width:560px;height:110px;transform:translate(-50%,-50%);
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 72%);}
+  .cc-persp{position:absolute;inset:0;perspective:1500px;perspective-origin:50% 46%;}
+  .cc-scene{position:absolute;left:50%;top:52%;transform-style:preserve-3d;}
+  .cc-axis{position:absolute;left:-3px;top:50%;width:6px;border-radius:3px;
+    background:linear-gradient(90deg,#5c4a2a,#e6c988,#5c4a2a);box-shadow:0 0 14px rgba(230,201,136,0.55);}
+  .cc-pivot{position:absolute;left:0;top:50%;width:0;height:0;transform-style:preserve-3d;}
+  .cc-wrapper{position:absolute;transform-style:preserve-3d;}
+  .cc-face{position:absolute;left:0;top:0;box-sizing:border-box;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
+  .cc-front{border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+    box-shadow:inset 0 0 22px rgba(0,0,0,0.25);}
+  .cc-back{border-radius:10px;}
+  .cc-overlay{position:absolute;inset:0;border-radius:9px;pointer-events:none;}
+  .cc-num-big{font-size:66px;color:#f6ecd9;font-weight:700;line-height:1;}
+  .cc-num-corner{position:absolute;font-size:16px;color:#d9b872;font-weight:600;}
+  .cc-num-tl{top:10px;left:13px;}
+  .cc-num-br{bottom:10px;right:13px;transform:rotate(180deg);}
+  .cc-controls{position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;}
+  .cc-btn{padding:10px 24px;border-radius:999px;border:1px solid #b79a63;background:rgba(0,0,0,0.35);
+    color:#f3e7cf;font-size:14px;letter-spacing:0.06em;cursor:pointer;}
+  .cc-btn:hover{background:rgba(0,0,0,0.5);}
+</style>
+</head>
+<body>
+<div class="cc-stage">
+  <div class="cc-title">
+    <div class="cc-eyebrow">Card Cylinder</div>
+    <div class="cc-headline cc-label">1〜12 のカードを円柱状に配置</div>
+  </div>
+
+  <div class="cc-shadow"></div>
+
+  <div class="cc-persp">
+    <div class="cc-scene" id="ccScene">
+      <div class="cc-axis" id="ccAxis"></div>
+      <div id="ccCards"></div>
+    </div>
+  </div>
+
+  <div class="cc-controls">
+    <button class="cc-btn cc-label" id="ccToggle">一時停止</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---- 見た目のパラメータ(元の Design Canvas 版のデフォルト値と同じ) ----
+  var W = 168, H = 248, T = 4;
+  var GAP = 72;
+  var ACCENT = '#8a1f2f';
+  var ACCENT_DEEP = '#430e18';
+  var GOLD = '#d9b872';
+  var TILT_X = 12;
+  var SPEED = 7; // deg/秒
+  var deg2rad = Math.PI / 180;
+
+  var scene = document.getElementById('ccScene');
+  var axis = document.getElementById('ccAxis');
+  var cardsRoot = document.getElementById('ccCards');
+  var toggleBtn = document.getElementById('ccToggle');
+
+  axis.style.height = (H + 30) + 'px';
+
+  // ---- カードのDOMを一度だけ組み立てる ----
+  var cards = [];
+  for (var i = 0; i < 12; i++) {
+    var pivot = document.createElement('div');
+    pivot.className = 'cc-pivot';
+
+    var wrapper = document.createElement('div');
+    wrapper.className = 'cc-wrapper';
+    wrapper.style.left = GAP + 'px';
+    wrapper.style.top = (-H / 2) + 'px';
+    wrapper.style.width = W + 'px';
+    wrapper.style.height = H + 'px';
+
+    var front = document.createElement('div');
+    front.className = 'cc-face cc-front';
+    front.style.width = W + 'px';
+    front.style.height = H + 'px';
+    front.style.border = '1.5px solid ' + GOLD;
+    front.style.background = 'linear-gradient(155deg,' + ACCENT + ' 0%,' + ACCENT_DEEP + ' 100%)';
+
+    var numBig = document.createElement('div');
+    numBig.className = 'cc-num cc-num-big';
+    numBig.textContent = String(i + 1);
+
+    var numTl = document.createElement('div');
+    numTl.className = 'cc-num cc-num-corner cc-num-tl';
+    numTl.textContent = String(i + 1);
+
+    var numBr = document.createElement('div');
+    numBr.className = 'cc-num cc-num-corner cc-num-br';
+    numBr.textContent = String(i + 1);
+
+    var overlay = document.createElement('div');
+    overlay.className = 'cc-overlay';
+
+    front.appendChild(numBig);
+    front.appendChild(numTl);
+    front.appendChild(numBr);
+    front.appendChild(overlay);
+
+    var back = document.createElement('div');
+    back.className = 'cc-face cc-back';
+    back.style.width = W + 'px';
+    back.style.height = H + 'px';
+    back.style.border = '1.5px solid ' + GOLD;
+    back.style.background = 'repeating-linear-gradient(45deg,' + ACCENT_DEEP + ' 0px,' + ACCENT_DEEP + ' 6px,#2c0910 6px,#2c0910 12px)';
+    back.style.transform = 'rotateY(180deg) translateZ(' + (T / 2) + 'px)';
+
+    var right = document.createElement('div');
+    right.className = 'cc-face';
+    right.style.left = (W - T / 2) + 'px';
+    right.style.width = T + 'px';
+    right.style.height = H + 'px';
+    right.style.background = 'linear-gradient(90deg,' + ACCENT_DEEP + ',#22070d)';
+    right.style.transform = 'rotateY(90deg)';
+
+    var top = document.createElement('div');
+    top.className = 'cc-face';
+    top.style.top = (-T / 2) + 'px';
+    top.style.width = W + 'px';
+    top.style.height = T + 'px';
+    top.style.background = 'linear-gradient(180deg,#c79a5a,' + GOLD + ')';
+    top.style.transform = 'rotateX(90deg)';
+
+    var bottom = document.createElement('div');
+    bottom.className = 'cc-face';
+    bottom.style.top = (H - T / 2) + 'px';
+    bottom.style.width = W + 'px';
+    bottom.style.height = T + 'px';
+    bottom.style.background = 'linear-gradient(180deg,' + ACCENT_DEEP + ',#22070d)';
+    bottom.style.transform = 'rotateX(-90deg)';
+
+    wrapper.appendChild(front);
+    wrapper.appendChild(back);
+    wrapper.appendChild(right);
+    wrapper.appendChild(top);
+    wrapper.appendChild(bottom);
+    pivot.appendChild(wrapper);
+    cardsRoot.appendChild(pivot);
+
+    cards.push({ baseAngle: i * 30, pivot: pivot, wrapper: wrapper, front: front, overlay: overlay });
+  }
+
+  // front面の translateZ はここで一度だけ設定(twist回転は wrapper 側が担当)
+  cards.forEach(function (c) { c.front.style.transform = 'translateZ(' + (T / 2) + 'px)'; });
+
+  // ---- 06:30(195°)⇄05:30(165°) の付近で「見た目の向き」だけ180°補正する ----
+  // (位置=円柱上の配置はそのまま。カード自体だけを裏返して番号面を常に正面に保つ)
+  var sinTilt = Math.sin(TILT_X * deg2rad) || 0.001;
+  function worldForClock(clockDeg) {
+    var r = clockDeg * deg2rad;
+    var w = Math.atan2(Math.cos(r) / sinTilt, Math.sin(r)) / deg2rad;
+    if (w < 0) w += 360;
+    return w;
+  }
+  var exitA = worldForClock(195);
+  var exitB = worldForClock(165);
+  var exitLo = Math.min(exitA, exitB);
+  var exitHi = Math.max(exitA, exitB);
+  var winWidth = (exitHi - exitLo) || 0.001;
+  var entryLo = 360 - exitHi;
+  var entryHi = 360 - exitLo;
+
+  function twistFor(worldDeg) {
+    var wm = worldDeg % 360;
+    if (wm < 0) wm += 360;
+    if (wm >= exitLo && wm <= exitHi) return (180 * (exitHi - wm)) / winWidth;      // 180°→0°
+    if (wm >= entryLo && wm <= entryHi) return (180 * (wm - entryLo)) / winWidth;   // 0°→180°
+    if (wm > entryHi && wm < exitLo) return 180;                                    // 背面側:常に180°補正
+    return 0;                                                                       // 表面側:補正不要
+  }
+
+  // ---- アニメーションループ ----
+  var spin = 25;
+  var playing = true;
+  var last = null;
+
+  function render() {
+    scene.style.transform =
+      'translate(-50%,-50%) rotateX(' + (-TILT_X) + 'deg) rotateY(' + spin + 'deg)';
+
+    cards.forEach(function (c) {
+      var world = c.baseAngle + spin;
+      var twist = twistFor(world);
+      var facing = Math.cos((world + twist) * deg2rad);
+      var shade = 0.26 + 0.62 * Math.max(0, facing);
+      var overlayAlpha = (1 - shade).toFixed(3);
+
+      c.pivot.style.transform = 'translateY(-50%) rotateY(' + c.baseAngle + 'deg)';
+      c.wrapper.style.transform = 'rotateY(' + twist + 'deg)';
+      c.overlay.style.background = 'rgba(0,0,0,' + overlayAlpha + ')';
+    });
+  }
+
+  function loop(t) {
+    if (last === null) last = t;
+    var dt = t - last;
+    last = t;
+    if (playing) {
+      spin = (spin + (dt / 1000) * SPEED) % 360;
+    }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  toggleBtn.addEventListener('click', function () {
+    playing = !playing;
+    toggleBtn.textContent = playing ? '一時停止' : '再生する';
+  });
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
