@@ -50,7 +50,6 @@
   <div class="cc-persp">
     <div class="cc-scene" id="ccScene">
       <div class="cc-axis" id="ccAxis"></div>
-      <div id="ccCards"></div>
     </div>
   </div>
 
@@ -73,7 +72,6 @@
 
   var scene = document.getElementById('ccScene');
   var axis = document.getElementById('ccAxis');
-  var cardsRoot = document.getElementById('ccCards');
   var toggleBtn = document.getElementById('ccToggle');
 
   axis.style.height = (H + 30) + 'px';
@@ -156,7 +154,7 @@
     wrapper.appendChild(top);
     wrapper.appendChild(bottom);
     pivot.appendChild(wrapper);
-    cardsRoot.appendChild(pivot);
+    scene.appendChild(pivot);
 
     cards.push({ baseAngle: i * 30, pivot: pivot, wrapper: wrapper, front: front, overlay: overlay });
   }
