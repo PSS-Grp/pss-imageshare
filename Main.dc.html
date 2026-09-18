@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>円柱状に並んだ12枚のカード</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+  body{margin:0;background:#0c0a08;}
+  .cc-num{font-family:'Shippori Mincho', 'Hiragino Mincho ProN', serif;}
+  .cc-label{font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;}
+</style>
+</helmet>
+<div style="width:960px;height:680px;box-sizing:border-box;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 26%, #2c2419 0%, #16120d 58%, #0a0806 100%);">
+
+  <div class="cc-label" style="position:absolute;top:34px;left:0;right:0;text-align:center;color:#e9dcc0;">
+    <div style="font-size:12px;letter-spacing:0.4em;color:#b79a63;text-transform:uppercase;">Card Cylinder</div>
+    <div style="font-size:21px;margin-top:6px;color:#f3e7cf;font-weight:500;">1〜12 のカードを円柱状に配置</div>
+  </div>
+
+  <div style="position:absolute;left:50%;top:59%;width:560px;height:110px;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 72%);"></div>
+
+  <div style="position:absolute;inset:0;perspective:{{perspective}}px;perspective-origin:50% 46%;">
+    <div style="{{sceneStyle}}">
+
+      <div style="position:absolute;left:-3px;top:50%;width:6px;height:{{axisHeight}}px;transform:translateY(-50%);border-radius:3px;background:linear-gradient(90deg,#5c4a2a,#e6c988,#5c4a2a);box-shadow:0 0 14px rgba(230,201,136,0.55);"></div>
+
+      <sc-for list="{{cards}}" as="card" hint-placeholder-count="12">
+        <div style="{{card.pivotStyle}}">
+          <div style="{{card.wrapperStyle}}">
+            <div style="{{card.frontStyle}}">
+              <div class="cc-num" style="font-size:66px;color:#f6ecd9;font-weight:700;line-height:1;">{{card.num}}</div>
+              <div class="cc-num" style="position:absolute;top:10px;left:13px;font-size:16px;color:#d9b872;font-weight:600;">{{card.num}}</div>
+              <div class="cc-num" style="position:absolute;bottom:10px;right:13px;font-size:16px;color:#d9b872;font-weight:600;transform:rotate(180deg);">{{card.num}}</div>
+              <div style="{{card.overlayStyle}}"></div>
+            </div>
+            <div style="{{card.backStyle}}"></div>
+            <div style="{{card.rightStyle}}"></div>
+            <div style="{{card.topStyle}}"></div>
+            <div style="{{card.bottomStyle}}"></div>
+          </div>
+        </div>
+      </sc-for>
+
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;">
+    <button class="cc-label" onClick="{{togglePlay}}" style="padding:10px 24px;border-radius:999px;border:1px solid #b79a63;background:rgba(0,0,0,0.35);color:#f3e7cf;font-size:14px;letter-spacing:0.06em;cursor:pointer;">{{playLabel}}</button>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accentColor":{"editor":"color","default":"#8a1f2f","options":["#8a1f2f","#1f3a5f","#1f5f3a","#3f2f5f"]},"tiltX":{"editor":"range","default":12,"min":0,"max":40,"step":1},"speed":{"editor":"range","default":7,"min":0,"max":40,"step":1,"unit":"deg/s"},"autoRotate":{"editor":"boolean","default":true},"centerGap":{"editor":"range","default":72,"min":0,"max":120,"step":2,"unit":"px"},"$preview":{"width":960,"height":680}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      spin: 25,
+      playing: this.props.autoRotate ?? true,
+    };
+    this._raf = null;
+    this._last = null;
+    this.togglePlay = this.togglePlay.bind(this);
+  }
+
+  componentDidMount() {
+    this._last = performance.now();
+    const loop = (t) => {
+      const dt = t - this._last;
+      this._last = t;
+      if (this.state.playing) {
+        const speed = this.props.speed ?? 12;
+        this.setState((s) => ({ spin: (s.spin + (dt / 1000) * speed) % 360 }));
+      }
+      this._raf = requestAnimationFrame(loop);
+    };
+    this._raf = requestAnimationFrame(loop);
+  }
+
+  componentWillUnmount() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+  }
+
+  togglePlay() {
+    this.setState((s) => ({ playing: !s.playing }));
+  }
+
+  renderVals() {
+    const W = 168;
+    const H = 248;
+    const T = 4;
+    const gap = this.props.centerGap ?? 26;
+    const accent = this.props.accentColor ?? '#8a1f2f';
+    const accentDeep = '#430e18';
+    const gold = '#d9b872';
+    const tiltX = this.props.tiltX ?? 12;
+    const spin = this.state.spin;
+    const deg2rad = Math.PI / 180;
+
+    // カードは中心の垂直軸まわりに回転しており、画面上では tiltX の傾きぶんだけ
+    // 縦につぶれた楕円軌道として見える。この見え方だと、カードが物理的に
+    // 真正面(回転なし)になれる画面位置は常に3時/9時に固定されてしまい、
+    // 12時/6時の付近(=ここでは05:30/06:30)ではどのカードも常に真横向き
+    // (紙のように薄く見える)になってしまう。そこで、その付近を通過する
+    // 間だけ「見た目の向き」に180°の補正回転(ひっくり返し)を加えて、
+    // 実際の位置(円柱上の配置)は変えずに番号面が常に正面を向くようにする。
+    const sinTilt = Math.sin(tiltX * deg2rad) || 0.001;
+    const worldForClock = (clockDeg) => {
+      const r = clockDeg * deg2rad;
+      let w = Math.atan2(Math.cos(r) / sinTilt, Math.sin(r)) / deg2rad;
+      if (w < 0) w += 360;
+      return w;
+    };
+    // 06:30(195°)→05:30(165°) の間で、裏向き(180°補正)から
+    // 表向き(補正なし)へなめらかに戻す「出口」の窓。
+    const exitA = worldForClock(195);
+    const exitB = worldForClock(165);
+    const exitLo = Math.min(exitA, exitB);
+    const exitHi = Math.max(exitA, exitB);
+    const winWidth = exitHi - exitLo || 0.001;
+    // 反対側(12時付近)は対称な位置に、表向き→裏向きへ切り替える「入口」の窓。
+    const entryLo = 360 - exitHi;
+    const entryHi = 360 - exitLo;
+
+    const twistFor = (worldDeg) => {
+      let wm = worldDeg % 360;
+      if (wm < 0) wm += 360;
+      if (wm >= exitLo && wm <= exitHi) {
+        return (180 * (exitHi - wm)) / winWidth; // 180°→0°
+      }
+      if (wm >= entryLo && wm <= entryHi) {
+        return (180 * (wm - entryLo)) / winWidth; // 0°→180°
+      }
+      if (wm > entryHi && wm < exitLo) {
+        return 180; // 背面側:常に180°補正して番号面を正面に保つ
+      }
+      return 0; // 表面側:補正不要
+    };
+
+    const cards = Array.from({ length: 12 }, (_, i) => {
+      const baseAngle = i * 30;
+      const world = baseAngle + spin;
+      const twist = twistFor(world);
+      const facing = Math.cos((world + twist) * deg2rad);
+      const shade = 0.26 + 0.62 * Math.max(0, facing);
+      const overlayAlpha = (1 - shade).toFixed(3);
+
+      const pivotStyle =
+        'position:absolute;left:0;top:50%;width:0;height:0;' +
+        'transform-style:preserve-3d;transform:translateY(-50%) rotateY(' + baseAngle + 'deg);';
+
+      const wrapperStyle =
+        'position:absolute;left:' + gap + 'px;top:' + (-H / 2) + 'px;width:' + W + 'px;height:' + H +
+        'px;transform-style:preserve-3d;transform:rotateY(' + twist + 'deg);';
+
+      const frontStyle =
+        'position:absolute;left:0;top:0;width:' + W + 'px;height:' + H +
+        'px;box-sizing:border-box;transform:translateZ(' + (T / 2) + 'px);' +
+        'backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;' +
+        'border:1.5px solid ' + gold + ';background:linear-gradient(155deg,' + accent + ' 0%,' + accentDeep + ' 100%);' +
+        'display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 0 22px rgba(0,0,0,0.25);';
+
+      const overlayStyle =
+        'position:absolute;inset:0;border-radius:9px;background:rgba(0,0,0,' + overlayAlpha + ');pointer-events:none;';
+
+      const backStyle =
+        'position:absolute;left:0;top:0;width:' + W + 'px;height:' + H +
+        'px;box-sizing:border-box;transform:rotateY(180deg) translateZ(' + (T / 2) + 'px);' +
+        'backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;border:1.5px solid ' + gold +
+        ';background:repeating-linear-gradient(45deg,' + accentDeep + ' 0px,' + accentDeep + ' 6px,#2c0910 6px,#2c0910 12px);';
+
+      const rightStyle =
+        'position:absolute;left:' + (W - T / 2) + 'px;top:0px;width:' + T + 'px;height:' + H +
+        'px;transform:rotateY(90deg);background:linear-gradient(90deg,' + accentDeep + ',#22070d);' +
+        'backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+
+      const topStyle =
+        'position:absolute;left:0px;top:' + (-T / 2) + 'px;width:' + W + 'px;height:' + T +
+        'px;transform:rotateX(90deg);background:linear-gradient(180deg,#c79a5a,' + gold + ');' +
+        'backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+
+      const bottomStyle =
+        'position:absolute;left:0px;top:' + (H - T / 2) + 'px;width:' + W + 'px;height:' + T +
+        'px;transform:rotateX(-90deg);background:linear-gradient(180deg,' + accentDeep + ',#22070d);' +
+        'backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+
+      return {
+        num: i + 1,
+        pivotStyle,
+        wrapperStyle,
+        frontStyle,
+        overlayStyle,
+        backStyle,
+        rightStyle,
+        topStyle,
+        bottomStyle,
+      };
+    });
+
+    const sceneStyle =
+      'position:absolute;left:50%;top:52%;transform-style:preserve-3d;' +
+      'transform:translate(-50%,-50%) rotateX(' + (-tiltX) + 'deg) rotateY(' + spin + 'deg);';
+
+    return {
+      cards,
+      sceneStyle,
+      perspective: 1500,
+      axisHeight: H + 30,
+      playLabel: this.state.playing ? '一時停止' : '再生する',
+      togglePlay: this.togglePlay,
+    };
+  }
+}
+</script>
+</body>
+</html>

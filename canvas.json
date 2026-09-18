@@ -1,0 +1,14 @@
+{
+  "v": 3,
+  "attachments": {},
+  "createdOnFiles": { "v": 1, "at": "2026-09-18T06:56:04.484Z" },
+  "title": "円柱状に並んだ12枚のカード",
+  "launch": { "view": "focused", "file": "Main.dc.html" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 960, "h": 680, "is_interactive": true }
+  },
+  "order": ["Main.dc.html"],
+  "notes": {},
+  "designSystems": []
+}
