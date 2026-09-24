@@ -11,7 +11,9 @@
   .cc-num{font-family:'Shippori Mincho', 'Hiragino Mincho ProN', serif;}
   .cc-label{font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;}
   .cc-stage{width:960px;height:680px;max-width:100%;box-sizing:border-box;position:relative;overflow:hidden;
-    background:radial-gradient(ellipse at 50% 26%, #2c2419 0%, #16120d 58%, #0a0806 100%);}
+    background:radial-gradient(ellipse at 50% 26%, #2c2419 0%, #16120d 58%, #0a0806 100%);
+    touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+  .cc-stage.cc-dragging{cursor:grabbing;}
   .cc-title{position:absolute;top:34px;left:0;right:0;text-align:center;color:#e9dcc0;}
   .cc-eyebrow{font-size:12px;letter-spacing:0.4em;color:#b79a63;text-transform:uppercase;}
   .cc-headline{font-size:21px;margin-top:6px;color:#f3e7cf;font-weight:500;}
@@ -39,10 +41,11 @@
 </style>
 </head>
 <body>
-<div class="cc-stage">
+<div class="cc-stage" id="ccStage">
   <div class="cc-title">
     <div class="cc-eyebrow">Card Cylinder</div>
     <div class="cc-headline cc-label">1〜12 のカードを円柱状に配置</div>
+    <div class="cc-label" style="font-size:12px;margin-top:6px;color:#9a8a6a;">ドラッグ / スワイプで回転できます</div>
   </div>
 
   <div class="cc-shadow"></div>
@@ -70,6 +73,7 @@
   var SPEED = 7; // deg/秒
   var deg2rad = Math.PI / 180;
 
+  var stage = document.getElementById('ccStage');
   var scene = document.getElementById('ccScene');
   var axis = document.getElementById('ccAxis');
   var toggleBtn = document.getElementById('ccToggle');
@@ -194,6 +198,7 @@
   // ---- アニメーションループ ----
   var spin = 25;
   var playing = true;
+  var dragging = false;
   var last = null;
 
   function render() {
@@ -217,7 +222,7 @@
     if (last === null) last = t;
     var dt = t - last;
     last = t;
-    if (playing) {
+    if (playing && !dragging) {
       spin = (spin + (dt / 1000) * SPEED) % 360;
     }
     render();
@@ -228,6 +233,36 @@
     playing = !playing;
     toggleBtn.textContent = playing ? '一時停止' : '再生する';
   });
+
+  // ---- ドラッグ / スワイプで手動回転 ----
+  var dragStartX = 0;
+  var dragStartSpin = 0;
+  var SENSITIVITY = 0.4; // 1pxのドラッグ = 0.4度の回転
+
+  stage.addEventListener('pointerdown', function (e) {
+    dragStartX = e.clientX;
+    dragStartSpin = spin;
+    dragging = true;
+    stage.classList.add('cc-dragging');
+    try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  stage.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - dragStartX;
+    var s = (dragStartSpin + dx * SENSITIVITY) % 360;
+    if (s < 0) s += 360;
+    spin = s;
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    stage.classList.remove('cc-dragging');
+    try { stage.releasePointerCapture(e.pointerId); } catch (err) {}
+  }
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
 
   requestAnimationFrame(loop);
 })();
