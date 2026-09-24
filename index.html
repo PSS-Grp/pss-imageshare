@@ -24,27 +24,71 @@
   .cc-axis{position:absolute;left:-3px;top:50%;width:6px;border-radius:3px;
     background:linear-gradient(90deg,#5c4a2a,#e6c988,#5c4a2a);box-shadow:0 0 14px rgba(230,201,136,0.55);}
   .cc-pivot{position:absolute;left:0;top:50%;width:0;height:0;transform-style:preserve-3d;}
-  .cc-wrapper{position:absolute;transform-style:preserve-3d;}
+  .cc-wrapper{position:absolute;transform-style:preserve-3d;cursor:pointer;}
   .cc-face{position:absolute;left:0;top:0;box-sizing:border-box;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
   .cc-front{border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;
     box-shadow:inset 0 0 22px rgba(0,0,0,0.25);}
   .cc-back{border-radius:10px;}
   .cc-overlay{position:absolute;inset:0;border-radius:9px;pointer-events:none;}
   .cc-num-big{font-size:66px;color:#f6ecd9;font-weight:700;line-height:1;}
-  .cc-num-corner{position:absolute;font-size:16px;color:#d9b872;font-weight:600;}
+  .cc-num-corner{position:absolute;font-size:16px;color:#d9b872;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.75);}
   .cc-num-tl{top:10px;left:13px;}
   .cc-num-br{bottom:10px;right:13px;transform:rotate(180deg);}
-  .cc-controls{position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;}
+  .cc-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px;}
+  .cc-controls{position:absolute;bottom:28px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:10px;}
   .cc-btn{padding:10px 24px;border-radius:999px;border:1px solid #b79a63;background:rgba(0,0,0,0.35);
     color:#f3e7cf;font-size:14px;letter-spacing:0.06em;cursor:pointer;}
   .cc-btn:hover{background:rgba(0,0,0,0.5);}
+
+  .cc-modal-backdrop{position:absolute;inset:0;background:rgba(6,4,2,0.86);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .cc-modal-panel{width:640px;max-width:92%;max-height:88%;overflow:auto;background:#1c1712;border:1px solid #b79a63;border-radius:14px;padding:26px 28px;box-sizing:border-box;}
+  .cc-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .cc-modal-title{font-size:18px;color:#f3e7cf;font-weight:700;}
+  .cc-modal-close{background:none;border:none;color:#b79a63;font-size:20px;cursor:pointer;line-height:1;}
+  .cc-form{display:flex;flex-direction:column;gap:12px;}
+  .cc-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#b79a63;}
+  .cc-field-row{display:flex;gap:12px;}
+  .cc-field-row .cc-field{flex:1;}
+  .cc-field input, .cc-field select, .cc-field textarea{padding:8px 10px;border-radius:8px;border:1px solid #4a3f2c;
+    background:#241d15;color:#f3e7cf;font-size:14px;font-family:inherit;box-sizing:border-box;}
+  .cc-field textarea{resize:vertical;}
+  .cc-field-label{font-size:12px;color:#b79a63;margin-bottom:8px;}
+  .cc-image-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .cc-image-slot{display:flex;flex-direction:column;gap:6px;align-items:center;}
+  .cc-image-slot-preview{width:100%;aspect-ratio:1;border-radius:8px;border:1px dashed #4a3f2c;background:#241d15;
+    overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .cc-image-slot-preview img{width:100%;height:100%;object-fit:cover;}
+  .cc-image-slot-preview span{color:#6a5a3f;font-size:11px;}
+  .cc-image-slot input[type=file]{max-width:100%;font-size:10px;color:#b79a63;}
+  .cc-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  .cc-btn-ghost{padding:8px 18px;border-radius:999px;border:1px solid #4a3f2c;background:transparent;color:#b79a63;font-size:13px;cursor:pointer;}
+  .cc-btn-save{padding:8px 20px;border-radius:999px;border:1px solid #b79a63;background:#8a1f2f;color:#f6ecd9;font-size:13px;font-weight:600;cursor:pointer;}
+
+  .cc-detail-overlay{position:absolute;inset:0;background:rgba(4,3,2,0.95);z-index:60;display:flex;flex-direction:column;}
+  .cc-detail-close{position:absolute;top:16px;right:18px;background:none;border:none;color:#e9dcc0;font-size:26px;cursor:pointer;line-height:1;z-index:2;}
+  .cc-detail-photo{flex:2 1 0%;min-height:0;position:relative;overflow:hidden;padding:24px 24px 12px 24px;box-sizing:border-box;
+    touch-action:none;user-select:none;-webkit-user-select:none;}
+  .cc-detail-photo-inner{width:100%;height:100%;border-radius:10px;overflow:hidden;background:#111;display:flex;align-items:center;justify-content:center;}
+  .cc-detail-photo-inner img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+  .cc-detail-photo-inner span{color:#5a4d38;font-size:13px;}
+  .cc-detail-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:1px solid rgba(217,184,114,0.5);
+    color:#f3e7cf;width:36px;height:36px;border-radius:999px;font-size:16px;cursor:pointer;}
+  .cc-detail-prev{left:34px;}
+  .cc-detail-next{right:34px;}
+  .cc-detail-dots{position:absolute;bottom:22px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
+  .cc-detail-dot{width:7px;height:7px;border-radius:999px;background:rgba(217,184,114,0.35);}
+  .cc-detail-dot.active{background:#d9b872;}
+  .cc-detail-info{flex:1 1 0%;overflow:auto;padding:14px 26px 20px 26px;box-sizing:border-box;color:#f3e7cf;}
+  .cc-detail-title{font-size:20px;font-weight:700;color:#f6ecd9;margin-bottom:6px;}
+  .cc-detail-meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;color:#d9b872;margin-bottom:8px;}
+  .cc-detail-memo{font-size:13px;color:#cbb98f;line-height:1.5;white-space:pre-line;}
 </style>
 </head>
 <body>
 <div class="cc-stage" id="ccStage">
   <div class="cc-title">
     <div class="cc-eyebrow">Card Cylinder</div>
-    <div class="cc-headline cc-label">1〜12 のカードを円柱状に配置</div>
+    <div class="cc-headline cc-label" id="ccHeadline">1〜12 のカードを円柱状に配置</div>
     <div class="cc-label" style="font-size:12px;margin-top:6px;color:#9a8a6a;">ドラッグ / スワイプで回転できます</div>
   </div>
 
@@ -58,6 +102,66 @@
 
   <div class="cc-controls">
     <button class="cc-btn cc-label" id="ccToggle">一時停止</button>
+    <button class="cc-btn cc-label" id="ccRegisterOpen">画像を登録</button>
+  </div>
+
+  <div class="cc-modal-backdrop" id="ccRegisterBackdrop" style="display:none;">
+    <div class="cc-modal-panel cc-label" id="ccRegisterPanel">
+      <div class="cc-modal-header">
+        <div class="cc-modal-title">画像グループの登録</div>
+        <button class="cc-modal-close" id="ccRegisterClose">×</button>
+      </div>
+      <div class="cc-form">
+        <label class="cc-field">カード番号
+          <select id="ccFormCardNum"></select>
+        </label>
+        <label class="cc-field">タイトル
+          <input type="text" id="ccFormTitle">
+        </label>
+        <div class="cc-field-row">
+          <label class="cc-field">ジャンル
+            <input type="text" id="ccFormGenre">
+          </label>
+          <label class="cc-field">カテゴリー
+            <input type="text" id="ccFormCategory">
+          </label>
+        </div>
+        <div class="cc-field-row">
+          <label class="cc-field">登録者名
+            <input type="text" id="ccFormRegistrant">
+          </label>
+          <label class="cc-field">住所
+            <input type="text" id="ccFormAddress">
+          </label>
+        </div>
+        <label class="cc-field">メモ
+          <textarea id="ccFormMemo" rows="3"></textarea>
+        </label>
+        <div>
+          <div class="cc-field-label">画像(4枚・1枚目がカードのサムネイルになります)</div>
+          <div class="cc-image-slots" id="ccImageSlots"></div>
+        </div>
+      </div>
+      <div class="cc-modal-actions">
+        <button class="cc-btn-ghost" id="ccRegisterCancel">キャンセル</button>
+        <button class="cc-btn-save" id="ccRegisterSave">登録する</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cc-detail-overlay" id="ccDetailOverlay" style="display:none;">
+    <button class="cc-detail-close" id="ccDetailClose">×</button>
+    <div class="cc-detail-photo" id="ccDetailPhoto">
+      <div class="cc-detail-photo-inner" id="ccDetailPhotoInner"></div>
+      <button class="cc-detail-nav cc-detail-prev" id="ccDetailPrev">‹</button>
+      <button class="cc-detail-nav cc-detail-next" id="ccDetailNext">›</button>
+      <div class="cc-detail-dots" id="ccDetailDots"></div>
+    </div>
+    <div class="cc-detail-info cc-label" id="ccDetailInfo">
+      <div class="cc-detail-title" id="ccDetailTitle"></div>
+      <div class="cc-detail-meta" id="ccDetailMeta"></div>
+      <div class="cc-detail-memo" id="ccDetailMemo"></div>
+    </div>
   </div>
 </div>
 
@@ -77,12 +181,43 @@
   var scene = document.getElementById('ccScene');
   var axis = document.getElementById('ccAxis');
   var toggleBtn = document.getElementById('ccToggle');
+  var headlineEl = document.getElementById('ccHeadline');
+
+  var registerOpenBtn = document.getElementById('ccRegisterOpen');
+  var registerBackdrop = document.getElementById('ccRegisterBackdrop');
+  var registerClose = document.getElementById('ccRegisterClose');
+  var registerCancel = document.getElementById('ccRegisterCancel');
+  var registerSave = document.getElementById('ccRegisterSave');
+  var cardNumSelect = document.getElementById('ccFormCardNum');
+  var titleInput = document.getElementById('ccFormTitle');
+  var genreInput = document.getElementById('ccFormGenre');
+  var categoryInput = document.getElementById('ccFormCategory');
+  var registrantInput = document.getElementById('ccFormRegistrant');
+  var addressInput = document.getElementById('ccFormAddress');
+  var memoInput = document.getElementById('ccFormMemo');
+  var imageSlotsEl = document.getElementById('ccImageSlots');
+
+  var detailOverlay = document.getElementById('ccDetailOverlay');
+  var detailClose = document.getElementById('ccDetailClose');
+  var detailPhoto = document.getElementById('ccDetailPhoto');
+  var detailPhotoInner = document.getElementById('ccDetailPhotoInner');
+  var detailPrev = document.getElementById('ccDetailPrev');
+  var detailNext = document.getElementById('ccDetailNext');
+  var detailDots = document.getElementById('ccDetailDots');
+  var detailTitle = document.getElementById('ccDetailTitle');
+  var detailMeta = document.getElementById('ccDetailMeta');
+  var detailMemo = document.getElementById('ccDetailMemo');
 
   axis.style.height = (H + 30) + 'px';
 
+  // ---- 登録済みの画像グループ(カード番号 -> {title,genre,category,registrant,address,memo,images:[4]}) ----
+  var groups = {};
+
   // ---- カードのDOMを一度だけ組み立てる ----
   var cards = [];
-  for (var i = 0; i < 12; i++) {
+  for (let i = 0; i < 12; i++) {
+    var num = i + 1;
+
     var pivot = document.createElement('div');
     pivot.className = 'cc-pivot';
 
@@ -102,15 +237,15 @@
 
     var numBig = document.createElement('div');
     numBig.className = 'cc-num cc-num-big';
-    numBig.textContent = String(i + 1);
+    numBig.textContent = String(num);
 
     var numTl = document.createElement('div');
     numTl.className = 'cc-num cc-num-corner cc-num-tl';
-    numTl.textContent = String(i + 1);
+    numTl.textContent = String(num);
 
     var numBr = document.createElement('div');
     numBr.className = 'cc-num cc-num-corner cc-num-br';
-    numBr.textContent = String(i + 1);
+    numBr.textContent = String(num);
 
     var overlay = document.createElement('div');
     overlay.className = 'cc-overlay';
@@ -152,6 +287,8 @@
     bottom.style.background = 'linear-gradient(180deg,' + ACCENT_DEEP + ',#22070d)';
     bottom.style.transform = 'rotateX(-90deg)';
 
+    wrapper.setAttribute('data-num', String(num));
+
     wrapper.appendChild(front);
     wrapper.appendChild(back);
     wrapper.appendChild(right);
@@ -160,7 +297,7 @@
     pivot.appendChild(wrapper);
     scene.appendChild(pivot);
 
-    cards.push({ baseAngle: i * 30, pivot: pivot, wrapper: wrapper, front: front, overlay: overlay });
+    cards.push({ num: num, baseAngle: i * 30, pivot: pivot, wrapper: wrapper, front: front, overlay: overlay, numBig: numBig, thumbImg: null });
   }
 
   // front面の translateZ はここで一度だけ設定(twist回転は wrapper 側が担当)
@@ -185,6 +322,7 @@
   var winWidth = (exitHi - exitLo) || 0.001;
   var entryLo = 360 - exitHi;
   var entryHi = 360 - exitLo;
+  var worldTarget180 = worldForClock(180);
 
   function twistFor(worldDeg) {
     var wm = worldDeg % 360;
@@ -199,7 +337,25 @@
   var spin = 25;
   var playing = true;
   var dragging = false;
+  var dragMoved = false;
   var last = null;
+  var lastHeadlineText = null;
+
+  function updateHeadline() {
+    var bestDiff = Infinity, frontNum = 1;
+    for (var k = 0; k < 12; k++) {
+      var w = (k * 30 + spin) % 360;
+      var diff = Math.abs(w - worldTarget180);
+      if (diff > 180) diff = 360 - diff;
+      if (diff < bestDiff) { bestDiff = diff; frontNum = k + 1; }
+    }
+    var g = groups[frontNum];
+    var text = (g && g.title) ? g.title : '1〜12 のカードを円柱状に配置';
+    if (text !== lastHeadlineText) {
+      headlineEl.textContent = text;
+      lastHeadlineText = text;
+    }
+  }
 
   function render() {
     scene.style.transform =
@@ -216,6 +372,8 @@
       c.wrapper.style.transform = 'rotateY(' + twist + 'deg)';
       c.overlay.style.background = 'rgba(0,0,0,' + overlayAlpha + ')';
     });
+
+    updateHeadline();
   }
 
   function loop(t) {
@@ -234,14 +392,24 @@
     toggleBtn.textContent = playing ? '一時停止' : '再生する';
   });
 
-  // ---- ドラッグ / スワイプで手動回転 ----
+  // ---- ドラッグ / スワイプで手動回転(登録モーダルや詳細画面が開いている間は無効) ----
+  // ボタンをクリックした時は setPointerCapture を奪わないようにし、カードのクリック
+  // (画像グループの選択)は移動量の少ないポインター操作として stage 側でまとめて判定する。
+  // ( setPointerCapture 中はブラウザの click イベントが捕獲先の要素に付け替わってしまい、
+  //   ボタンやカードの通常の click ハンドラが発火しなくなるため。)
   var dragStartX = 0;
   var dragStartSpin = 0;
   var SENSITIVITY = 0.4; // 1pxのドラッグ = 0.4度の回転
+  var downCardNum = null;
 
   stage.addEventListener('pointerdown', function (e) {
+    if (registerOpen || selectedCard !== null) return;
+    if (e.target.closest('button')) return;
     dragStartX = e.clientX;
     dragStartSpin = spin;
+    dragMoved = false;
+    var wrapperEl = e.target.closest('.cc-wrapper');
+    downCardNum = wrapperEl ? parseInt(wrapperEl.getAttribute('data-num'), 10) : null;
     dragging = true;
     stage.classList.add('cc-dragging');
     try { stage.setPointerCapture(e.pointerId); } catch (err) {}
@@ -250,6 +418,7 @@
   stage.addEventListener('pointermove', function (e) {
     if (!dragging) return;
     var dx = e.clientX - dragStartX;
+    if (Math.abs(dx) > 2) dragMoved = true;
     var s = (dragStartSpin + dx * SENSITIVITY) % 360;
     if (s < 0) s += 360;
     spin = s;
@@ -259,10 +428,246 @@
     if (!dragging) return;
     dragging = false;
     stage.classList.remove('cc-dragging');
+    if (!dragMoved && downCardNum !== null) selectCard(downCardNum);
+    downCardNum = null;
     try { stage.releasePointerCapture(e.pointerId); } catch (err) {}
   }
   stage.addEventListener('pointerup', endDrag);
   stage.addEventListener('pointercancel', endDrag);
+
+  // ---- 画像を canvas で縮小してから data URL として保持する ----
+  // (12枚 x 4枚ぶんを保持するため、なるべく軽量化しておく)
+  function resizeImageFile(file) {
+    return new Promise(function (resolve) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var maxDim = 900;
+          var w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w >= h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ---- 登録モーダル ----
+  var registerOpen = false;
+  var formImages = [null, null, null, null];
+  var slotPreviewEls = [];
+  var slotFileInputs = [];
+
+  for (var s = 0; s < 12; s++) {
+    var opt = document.createElement('option');
+    opt.value = String(s + 1);
+    opt.textContent = String(s + 1);
+    cardNumSelect.appendChild(opt);
+  }
+
+  for (let idx = 0; idx < 4; idx++) {
+    var slot = document.createElement('div');
+    slot.className = 'cc-image-slot';
+
+    var preview = document.createElement('div');
+    preview.className = 'cc-image-slot-preview';
+
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      resizeImageFile(file).then(function (dataUrl) {
+        formImages[idx] = dataUrl;
+        renderImageSlots();
+      });
+    });
+
+    slot.appendChild(preview);
+    slot.appendChild(fileInput);
+    imageSlotsEl.appendChild(slot);
+    slotPreviewEls.push(preview);
+    slotFileInputs.push(fileInput);
+  }
+
+  function renderImageSlots() {
+    for (var k = 0; k < 4; k++) {
+      var src = formImages[k];
+      slotPreviewEls[k].innerHTML = '';
+      if (src) {
+        var img = document.createElement('img');
+        img.src = src;
+        slotPreviewEls[k].appendChild(img);
+      } else {
+        var span = document.createElement('span');
+        span.textContent = k === 0 ? 'サムネイル' : ('画像' + (k + 1));
+        slotPreviewEls[k].appendChild(span);
+      }
+    }
+  }
+
+  function loadFormForCard(num) {
+    cardNumSelect.value = String(num);
+    var g = groups[num];
+    titleInput.value = g ? g.title : '';
+    genreInput.value = g ? g.genre : '';
+    categoryInput.value = g ? g.category : '';
+    registrantInput.value = g ? g.registrant : '';
+    addressInput.value = g ? g.address : '';
+    memoInput.value = g ? g.memo : '';
+    formImages = g ? g.images.slice() : [null, null, null, null];
+    renderImageSlots();
+  }
+
+  function openRegister() {
+    registerOpen = true;
+    loadFormForCard(parseInt(cardNumSelect.value, 10) || 1);
+    registerBackdrop.style.display = 'flex';
+  }
+
+  function closeRegister() {
+    registerOpen = false;
+    registerBackdrop.style.display = 'none';
+  }
+
+  registerOpenBtn.addEventListener('click', openRegister);
+  registerClose.addEventListener('click', closeRegister);
+  registerCancel.addEventListener('click', closeRegister);
+  registerBackdrop.addEventListener('click', function (e) {
+    if (e.target === registerBackdrop) closeRegister();
+  });
+  cardNumSelect.addEventListener('change', function () {
+    loadFormForCard(parseInt(cardNumSelect.value, 10));
+  });
+
+  registerSave.addEventListener('click', function () {
+    var num = parseInt(cardNumSelect.value, 10);
+    groups[num] = {
+      title: titleInput.value,
+      genre: genreInput.value,
+      category: categoryInput.value,
+      registrant: registrantInput.value,
+      address: addressInput.value,
+      memo: memoInput.value,
+      images: formImages.slice(),
+    };
+    updateCardThumb(num);
+    closeRegister();
+  });
+
+  function updateCardThumb(num) {
+    var c = cards[num - 1];
+    var g = groups[num];
+    var hasImage = !!(g && g.images && g.images[0]);
+    if (hasImage) {
+      if (!c.thumbImg) {
+        c.thumbImg = document.createElement('img');
+        c.thumbImg.className = 'cc-card-thumb';
+        c.front.insertBefore(c.thumbImg, c.front.firstChild);
+      }
+      c.thumbImg.src = g.images[0];
+      c.thumbImg.style.display = '';
+      c.numBig.style.display = 'none';
+    } else {
+      if (c.thumbImg) c.thumbImg.style.display = 'none';
+      c.numBig.style.display = '';
+    }
+  }
+
+  // ---- カードをクリックして詳細を表示(4枚の画像はスワイプで切り替え) ----
+  var selectedCard = null;
+  var photoIndex = 0;
+
+  function selectCard(num) {
+    if (!groups[num]) return;
+    selectedCard = num;
+    photoIndex = 0;
+    renderDetail();
+    detailOverlay.style.display = 'flex';
+  }
+
+  function closeDetail() {
+    selectedCard = null;
+    detailOverlay.style.display = 'none';
+  }
+
+  function renderDetail() {
+    var g = groups[selectedCard];
+    if (!g) return;
+    detailTitle.textContent = g.title;
+    detailMeta.innerHTML = '';
+    ['ジャンル: ' + g.genre, 'カテゴリー: ' + g.category, '登録者: ' + g.registrant, '住所: ' + g.address].forEach(function (t) {
+      var span = document.createElement('span');
+      span.textContent = t;
+      detailMeta.appendChild(span);
+    });
+    detailMemo.textContent = g.memo;
+    renderDetailPhoto();
+  }
+
+  function renderDetailPhoto() {
+    var g = groups[selectedCard];
+    var src = g ? g.images[photoIndex] : null;
+    detailPhotoInner.innerHTML = '';
+    if (src) {
+      var img = document.createElement('img');
+      img.src = src;
+      detailPhotoInner.appendChild(img);
+    } else {
+      var span = document.createElement('span');
+      span.textContent = '画像なし';
+      detailPhotoInner.appendChild(span);
+    }
+    detailDots.innerHTML = '';
+    for (var k = 0; k < 4; k++) {
+      var dot = document.createElement('div');
+      dot.className = 'cc-detail-dot' + (k === photoIndex ? ' active' : '');
+      detailDots.appendChild(dot);
+    }
+  }
+
+  function nextPhoto() { photoIndex = (photoIndex + 1) % 4; renderDetailPhoto(); }
+  function prevPhoto() { photoIndex = (photoIndex + 3) % 4; renderDetailPhoto(); }
+
+  detailClose.addEventListener('click', closeDetail);
+  detailPrev.addEventListener('click', prevPhoto);
+  detailNext.addEventListener('click', nextPhoto);
+
+  // 詳細画面の画像はスワイプ(横ドラッグ)で切り替える。ステージ全体の回転ドラッグとは
+  // 別の独立したジェスチャーとして扱う(stopPropagationでステージ側に伝播させない)。
+  var photoDragStartX = null;
+
+  detailPhoto.addEventListener('pointerdown', function (e) {
+    e.stopPropagation();
+    photoDragStartX = e.clientX;
+    try { detailPhoto.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  detailPhoto.addEventListener('pointermove', function (e) {
+    e.stopPropagation();
+  });
+  function endPhotoDrag(e) {
+    e.stopPropagation();
+    try { detailPhoto.releasePointerCapture(e.pointerId); } catch (err) {}
+    if (photoDragStartX === null) return;
+    var dx = e.clientX - photoDragStartX;
+    var THRESHOLD = 40;
+    if (dx <= -THRESHOLD) nextPhoto();
+    else if (dx >= THRESHOLD) prevPhoto();
+    photoDragStartX = null;
+  }
+  detailPhoto.addEventListener('pointerup', endPhotoDrag);
+  detailPhoto.addEventListener('pointercancel', endPhotoDrag);
 
   requestAnimationFrame(loop);
 })();
