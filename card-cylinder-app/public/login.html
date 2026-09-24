@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ログイン | Card Cylinder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+  html,body{margin:0;background:#0c0a08;}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;box-sizing:border-box;
+    font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;
+    background:radial-gradient(ellipse at 50% 26%, #2c2419 0%, #16120d 58%, #0a0806 100%);}
+  .panel{width:360px;max-width:100%;background:#1c1712;border:1px solid #b79a63;border-radius:14px;padding:30px 28px;box-sizing:border-box;}
+  .eyebrow{font-size:12px;letter-spacing:0.4em;color:#b79a63;text-transform:uppercase;text-align:center;}
+  h1{font-size:20px;color:#f3e7cf;font-weight:700;text-align:center;margin:6px 0 22px;}
+  label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#b79a63;}
+  input{padding:10px 12px;border-radius:8px;border:1px solid #4a3f2c;background:#241d15;color:#f3e7cf;font-size:15px;font-family:inherit;}
+  input:focus{outline:2px solid #b79a63;outline-offset:1px;}
+  button{margin-top:20px;width:100%;padding:11px 20px;border-radius:999px;border:1px solid #b79a63;background:#8a1f2f;
+    color:#f6ecd9;font-size:14px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:inherit;}
+  .error{margin-top:14px;font-size:13px;color:#e8808f;text-align:center;}
+</style>
+</head>
+<body>
+<form class="panel" method="post" action="/login">
+  <div class="eyebrow">Card Cylinder</div>
+  <h1>ログイン</h1>
+  <label>パスワード
+    <input type="password" name="password" autocomplete="current-password" required autofocus>
+  </label>
+  <button type="submit">ログインする</button>
+  <div class="error" id="error" hidden>パスワードが違います</div>
+</form>
+<script>
+  if (new URLSearchParams(location.search).has('error')) document.getElementById('error').hidden = false;
+</script>
+</body>
+</html>

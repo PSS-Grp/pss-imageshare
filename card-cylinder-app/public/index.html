@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>円柱状に並んだ12枚のカード</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+  html,body{margin:0;background:#0c0a08;}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  .cc-num{font-family:'Shippori Mincho', 'Hiragino Mincho ProN', serif;}
+  .cc-label{font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;}
+  .cc-stage{width:960px;height:680px;max-width:100%;box-sizing:border-box;position:relative;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 26%, #2c2419 0%, #16120d 58%, #0a0806 100%);
+    touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+  .cc-stage.cc-dragging{cursor:grabbing;}
+  .cc-title{position:absolute;top:34px;left:0;right:0;text-align:center;color:#e9dcc0;}
+  .cc-eyebrow{font-size:12px;letter-spacing:0.4em;color:#b79a63;text-transform:uppercase;}
+  .cc-headline{font-size:21px;margin-top:6px;color:#f3e7cf;font-weight:500;}
+  .cc-hint{font-size:12px;margin-top:6px;color:#9a8a6a;}
+  .cc-shadow{position:absolute;left:50%;top:59%;width:560px;height:110px;transform:translate(-50%,-50%);
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 72%);}
+  .cc-persp{position:absolute;inset:0;perspective:1500px;perspective-origin:50% 46%;}
+  .cc-scene{position:absolute;left:50%;top:52%;transform-style:preserve-3d;}
+  .cc-axis{position:absolute;left:-3px;top:50%;width:6px;border-radius:3px;
+    background:linear-gradient(90deg,#5c4a2a,#e6c988,#5c4a2a);box-shadow:0 0 14px rgba(230,201,136,0.55);}
+  .cc-pivot{position:absolute;left:0;top:50%;width:0;height:0;transform-style:preserve-3d;}
+  .cc-wrapper{position:absolute;transform-style:preserve-3d;cursor:pointer;}
+  .cc-face{position:absolute;left:0;top:0;box-sizing:border-box;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
+  .cc-front{border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+    box-shadow:inset 0 0 22px rgba(0,0,0,0.25);}
+  .cc-back{border-radius:10px;}
+  .cc-overlay{position:absolute;inset:0;border-radius:9px;pointer-events:none;}
+  .cc-num-big{font-size:66px;color:#f6ecd9;font-weight:700;line-height:1;}
+  .cc-num-corner{position:absolute;font-size:16px;color:#d9b872;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.75);}
+  .cc-num-tl{top:10px;left:13px;}
+  .cc-num-br{bottom:10px;right:13px;transform:rotate(180deg);}
+  .cc-card-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px;}
+  .cc-controls{position:absolute;bottom:28px;left:0;right:0;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:0 16px;}
+  .cc-btn{padding:10px 24px;border-radius:999px;border:1px solid #b79a63;background:rgba(0,0,0,0.35);
+    color:#f3e7cf;font-size:14px;letter-spacing:0.06em;cursor:pointer;}
+  .cc-btn:hover{background:rgba(0,0,0,0.5);}
+  .cc-btn.cc-active{background:#8a1f2f;}
+  .cc-logout{position:absolute;top:16px;right:18px;margin:0;}
+  .cc-logout button{background:none;border:none;color:#9a8a6a;font-size:12px;cursor:pointer;text-decoration:underline;}
+  .cc-toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);padding:8px 16px;border-radius:8px;
+    background:rgba(0,0,0,0.75);border:1px solid #4a3f2c;color:#f3e7cf;font-size:13px;z-index:70;white-space:nowrap;}
+
+  .cc-modal-backdrop{position:absolute;inset:0;background:rgba(6,4,2,0.86);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .cc-modal-panel{width:640px;max-width:92%;max-height:88%;overflow:auto;background:#1c1712;border:1px solid #b79a63;border-radius:14px;padding:26px 28px;box-sizing:border-box;}
+  .cc-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .cc-modal-title{font-size:18px;color:#f3e7cf;font-weight:700;}
+  .cc-modal-close{background:none;border:none;color:#b79a63;font-size:20px;cursor:pointer;line-height:1;}
+  .cc-form{display:flex;flex-direction:column;gap:12px;}
+  .cc-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#b79a63;}
+  .cc-field-row{display:flex;gap:12px;}
+  .cc-field-row .cc-field{flex:1;min-width:0;}
+  .cc-field input, .cc-field select, .cc-field textarea{padding:8px 10px;border-radius:8px;border:1px solid #4a3f2c;
+    background:#241d15;color:#f3e7cf;font-size:14px;font-family:inherit;box-sizing:border-box;}
+  .cc-field textarea{resize:vertical;}
+  .cc-field-label{font-size:12px;color:#b79a63;margin-bottom:8px;}
+  .cc-image-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .cc-image-slot{display:flex;flex-direction:column;gap:6px;align-items:center;min-width:0;}
+  .cc-image-slot-preview{width:100%;aspect-ratio:1;border-radius:8px;border:1px dashed #4a3f2c;background:#241d15;
+    overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .cc-image-slot-preview img{width:100%;height:100%;object-fit:cover;}
+  .cc-image-slot-preview span{color:#6a5a3f;font-size:11px;}
+  .cc-image-slot input[type=file]{max-width:100%;font-size:10px;color:#b79a63;}
+  .cc-form-error{font-size:13px;color:#e8808f;min-height:1em;}
+  .cc-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  .cc-btn-ghost{padding:8px 18px;border-radius:999px;border:1px solid #4a3f2c;background:transparent;color:#b79a63;font-size:13px;cursor:pointer;}
+  .cc-btn-save{padding:8px 20px;border-radius:999px;border:1px solid #b79a63;background:#8a1f2f;color:#f6ecd9;font-size:13px;font-weight:600;cursor:pointer;}
+  .cc-btn-save:disabled{opacity:0.6;cursor:wait;}
+
+  .cc-detail-overlay{position:absolute;inset:0;background:rgba(4,3,2,0.95);z-index:60;display:flex;flex-direction:column;}
+  .cc-detail-close{position:absolute;top:16px;right:18px;background:none;border:none;color:#e9dcc0;font-size:26px;cursor:pointer;line-height:1;z-index:2;}
+  .cc-detail-photo{flex:2 1 0%;min-height:0;position:relative;overflow:hidden;padding:24px 24px 12px 24px;box-sizing:border-box;
+    touch-action:none;user-select:none;-webkit-user-select:none;}
+  .cc-detail-photo-inner{width:100%;height:100%;border-radius:10px;overflow:hidden;background:#111;display:flex;align-items:center;justify-content:center;}
+  .cc-detail-photo-inner img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+  .cc-detail-photo-inner span{color:#5a4d38;font-size:13px;}
+  .cc-detail-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:1px solid rgba(217,184,114,0.5);
+    color:#f3e7cf;width:36px;height:36px;border-radius:999px;font-size:16px;cursor:pointer;}
+  .cc-detail-prev{left:34px;}
+  .cc-detail-next{right:34px;}
+  .cc-detail-dots{position:absolute;bottom:22px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
+  .cc-detail-dot{width:7px;height:7px;border-radius:999px;background:rgba(217,184,114,0.35);}
+  .cc-detail-dot.active{background:#d9b872;}
+  .cc-detail-info{flex:1 1 0%;overflow:auto;padding:14px 26px 20px 26px;box-sizing:border-box;color:#f3e7cf;}
+  .cc-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .cc-detail-title{font-size:20px;font-weight:700;color:#f6ecd9;margin-bottom:6px;}
+  .cc-detail-delete{flex:none;padding:5px 14px;border-radius:999px;border:1px solid #6a3a3f;background:transparent;color:#e8808f;font-size:12px;cursor:pointer;}
+  .cc-detail-meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;color:#d9b872;margin-bottom:8px;}
+  .cc-detail-memo{font-size:13px;color:#cbb98f;line-height:1.5;white-space:pre-line;}
+</style>
+</head>
+<body>
+<div class="cc-stage" id="ccStage">
+  <div class="cc-title">
+    <div class="cc-eyebrow">Card Cylinder</div>
+    <div class="cc-headline cc-label" id="ccHeadline">1〜12 のカードを円柱状に配置</div>
+    <div class="cc-hint cc-label">ドラッグ / スワイプで回転できます</div>
+  </div>
+
+  <form class="cc-logout cc-label" method="post" action="/logout">
+    <button type="submit">ログアウト</button>
+  </form>
+
+  <div class="cc-shadow"></div>
+
+  <div class="cc-persp">
+    <div class="cc-scene" id="ccScene">
+      <div class="cc-axis" id="ccAxis"></div>
+    </div>
+  </div>
+
+  <div class="cc-controls">
+    <button class="cc-btn cc-label" id="ccToggle">一時停止</button>
+    <button class="cc-btn cc-label" id="ccRegisterOpen">画像を登録</button>
+    <button class="cc-btn cc-label" id="ccFilterOpen">絞り込み</button>
+  </div>
+
+  <div class="cc-toast cc-label" id="ccToast" hidden></div>
+
+  <div class="cc-modal-backdrop" id="ccRegisterBackdrop" style="display:none;">
+    <div class="cc-modal-panel cc-label">
+      <div class="cc-modal-header">
+        <div class="cc-modal-title">画像グループの登録</div>
+        <button class="cc-modal-close" id="ccRegisterClose">×</button>
+      </div>
+      <div class="cc-form">
+        <label class="cc-field">タイトル(必須)
+          <input type="text" id="ccFormTitle" maxlength="200">
+        </label>
+        <div class="cc-field-row">
+          <label class="cc-field">ジャンル
+            <input type="text" id="ccFormGenre" maxlength="100" list="ccGenreList">
+          </label>
+          <label class="cc-field">カテゴリー
+            <input type="text" id="ccFormCategory" maxlength="100" list="ccCategoryList">
+          </label>
+        </div>
+        <datalist id="ccGenreList"></datalist>
+        <datalist id="ccCategoryList"></datalist>
+        <div class="cc-field-row">
+          <label class="cc-field">登録者名
+            <input type="text" id="ccFormRegistrant" maxlength="100">
+          </label>
+          <label class="cc-field">住所
+            <input type="text" id="ccFormAddress" maxlength="300">
+          </label>
+        </div>
+        <label class="cc-field">メモ
+          <textarea id="ccFormMemo" rows="3" maxlength="5000"></textarea>
+        </label>
+        <div>
+          <div class="cc-field-label">画像(4枚・1枚目がカードのサムネイルになります)</div>
+          <div class="cc-image-slots" id="ccImageSlots"></div>
+        </div>
+        <div class="cc-form-error" id="ccRegisterError"></div>
+      </div>
+      <div class="cc-modal-actions">
+        <button class="cc-btn-ghost" id="ccRegisterCancel">キャンセル</button>
+        <button class="cc-btn-save" id="ccRegisterSave">登録する</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cc-modal-backdrop" id="ccFilterBackdrop" style="display:none;">
+    <div class="cc-modal-panel cc-label">
+      <div class="cc-modal-header">
+        <div class="cc-modal-title">絞り込み</div>
+        <button class="cc-modal-close" id="ccFilterClose">×</button>
+      </div>
+      <div class="cc-form">
+        <div class="cc-field-row">
+          <label class="cc-field">カテゴリー
+            <select id="ccFilterCategory"></select>
+          </label>
+          <label class="cc-field">ジャンル
+            <select id="ccFilterGenre"></select>
+          </label>
+        </div>
+        <label class="cc-field">キーワード(タイトル・メモ)
+          <input type="search" id="ccFilterKeyword">
+        </label>
+        <div class="cc-field-label" id="ccFilterCount"></div>
+      </div>
+      <div class="cc-modal-actions">
+        <button class="cc-btn-ghost" id="ccFilterClear">条件をクリア</button>
+        <button class="cc-btn-save" id="ccFilterApply">この条件で表示</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cc-detail-overlay" id="ccDetailOverlay" style="display:none;">
+    <button class="cc-detail-close" id="ccDetailClose">×</button>
+    <div class="cc-detail-photo" id="ccDetailPhoto">
+      <div class="cc-detail-photo-inner" id="ccDetailPhotoInner"></div>
+      <button class="cc-detail-nav cc-detail-prev" id="ccDetailPrev">‹</button>
+      <button class="cc-detail-nav cc-detail-next" id="ccDetailNext">›</button>
+      <div class="cc-detail-dots" id="ccDetailDots"></div>
+    </div>
+    <div class="cc-detail-info cc-label">
+      <div class="cc-detail-head">
+        <div class="cc-detail-title" id="ccDetailTitle"></div>
+        <button class="cc-detail-delete" id="ccDetailDelete">削除</button>
+      </div>
+      <div class="cc-detail-meta" id="ccDetailMeta"></div>
+      <div class="cc-detail-memo" id="ccDetailMemo"></div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
