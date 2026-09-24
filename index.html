@@ -173,8 +173,11 @@
   }
   var exitA = worldForClock(195);
   var exitB = worldForClock(165);
-  var exitLo = Math.min(exitA, exitB);
-  var exitHi = Math.max(exitA, exitB);
+  var exitCenter = (exitA + exitB) / 2;
+  var FLIP_WIDEN = 2.5; // 反転をゆっくりにする倍率(大きいほどゆっくり)
+  var exitHalf = (Math.abs(exitA - exitB) / 2) * FLIP_WIDEN;
+  var exitLo = exitCenter - exitHalf;
+  var exitHi = exitCenter + exitHalf;
   var winWidth = (exitHi - exitLo) || 0.001;
   var entryLo = 360 - exitHi;
   var entryHi = 360 - exitLo;
