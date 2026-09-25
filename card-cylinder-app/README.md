@@ -92,6 +92,7 @@ card-cylinder-app/
 | メソッド | パス | 内容 |
 | --- | --- | --- |
 | GET | `/api/groups` | 全グループ(登録順)。`images` は4枠それぞれに画像があるかどうか |
+| GET | `/api/storage-usage` | 画像の保存容量(枚数・使用バイト数・上限)。登録画面の上部に表示 |
 | POST | `/api/groups` | グループを登録。画像は data URL(JPEG/PNG/WebP/GIF)の配列で送る |
 | DELETE | `/api/groups/:id` | グループを削除(画像も一緒に消える) |
 | GET | `/api/groups/:id/images/:slot` | 画像本体(slot は 0〜3) |

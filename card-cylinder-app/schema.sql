@@ -33,3 +33,7 @@ BEGIN
     ALTER TABLE group_images DROP COLUMN data;
   END IF;
 END $$;
+
+-- 画像のバイト数(Storage 使用量の表示用)。この列ができる前に登録した画像は NULL で、
+-- サーバーが起動時に Storage へ問い合わせて埋める。
+ALTER TABLE group_images ADD COLUMN IF NOT EXISTS size INTEGER;

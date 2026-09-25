@@ -17,6 +17,8 @@ const { createClient } = require('@supabase/supabase-js');
 
 const { DATABASE_URL, SITE_PASSWORD, SESSION_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'images';
+// 使用量表示の上限(MB)。Supabase の無料プランの Storage は 1GB。
+const STORAGE_LIMIT_MB = Number(process.env.STORAGE_LIMIT_MB) || 1024;
 const SESSION_HOURS = Number(process.env.SESSION_HOURS) || 720;
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -49,6 +51,27 @@ async function ensureBucket() {
   if (!error) return;
   const created = await supabase.storage.createBucket(SUPABASE_BUCKET, { public: false });
   if (created.error) throw new Error(`バケット ${SUPABASE_BUCKET} を作成できません: ${created.error.message}`);
+}
+
+// size 列ができる前に登録した画像のバイト数を、Storage の一覧から埋める
+async function backfillImageSizes() {
+  const { rows } = await pool.query(
+    'SELECT DISTINCT group_id FROM group_images WHERE size IS NULL');
+  for (const { group_id: groupId } of rows) {
+    const { data, error } = await bucket().list(`groups/${groupId}`);
+    if (error) {
+      console.error(`画像サイズを取得できません(グループ${groupId}):`, error.message);
+      continue;
+    }
+    for (const item of data) {
+      const slot = Number(item.name);
+      const size = item.metadata && item.metadata.size;
+      if (!Number.isInteger(slot) || !Number.isInteger(size)) continue;
+      await pool.query(
+        'UPDATE group_images SET size = $3 WHERE group_id = $1 AND slot = $2 AND size IS NULL',
+        [groupId, slot, size]);
+    }
+  }
 }
 
 async function removeImages(paths) {
@@ -199,6 +222,16 @@ app.get('/api/groups', wrap(async (req, res) => {
   })));
 }));
 
+app.get('/api/storage-usage', wrap(async (req, res) => {
+  const { rows } = await pool.query(
+    'SELECT COUNT(*)::int AS count, COALESCE(SUM(size), 0)::bigint AS used FROM group_images');
+  res.json({
+    count: rows[0].count,
+    usedBytes: Number(rows[0].used),
+    limitBytes: STORAGE_LIMIT_MB * 1024 * 1024,
+  });
+}));
+
 app.post('/api/groups', express.json({ limit: '15mb' }), wrap(async (req, res) => {
   const group = parseGroupBody(req.body || {});
   const client = await pool.connect();
@@ -217,8 +250,8 @@ app.post('/api/groups', express.json({ limit: '15mb' }), wrap(async (req, res) =
       if (error) throw new Error(`画像のアップロードに失敗しました: ${error.message}`);
       uploaded.push(key);
       await client.query(
-        'INSERT INTO group_images (group_id, slot, mime) VALUES ($1, $2, $3)',
-        [id, img.slot, img.mime]);
+        'INSERT INTO group_images (group_id, slot, mime, size) VALUES ($1, $2, $3, $4)',
+        [id, img.slot, img.mime, img.data.length]);
     }
     await client.query('COMMIT');
     res.status(201).json({ id });
@@ -271,6 +304,7 @@ app.use((err, req, res, next) => {
   await pool.query(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
   await ensureBucket();
   app.listen(PORT, () => console.log(`Card Cylinder: http://localhost:${PORT}`));
+  backfillImageSizes().catch((err) => console.error('画像サイズの補完に失敗しました:', err.message));
 })().catch((err) => {
   console.error('起動に失敗しました:', err);
   process.exit(1);

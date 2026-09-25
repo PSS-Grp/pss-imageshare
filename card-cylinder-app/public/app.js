@@ -31,6 +31,9 @@
   var addressInput = $('ccFormAddress');
   var memoInput = $('ccFormMemo');
   var imageSlotsEl = $('ccImageSlots');
+  var storageEl = $('ccStorage');
+  var storageText = $('ccStorageText');
+  var storageBar = $('ccStorageBar');
 
   var filterOpenBtn = $('ccFilterOpen');
   var filterBackdrop = $('ccFilterBackdrop');
@@ -462,12 +465,33 @@
     }
   }
 
+  // ---- 画像の保存容量(Supabase Storage)の表示 ----
+  function formatBytes(n) {
+    if (n >= 1024 * 1024 * 1024) return (n / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+    if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
+    return Math.round(n / 1024) + ' KB';
+  }
+
+  function loadStorageUsage() {
+    api('GET', '/api/storage-usage').then(function (u) {
+      var ratio = u.limitBytes ? u.usedBytes / u.limitBytes : 0;
+      storageText.textContent = '画像の保存容量: ' + formatBytes(u.usedBytes) + ' / ' + formatBytes(u.limitBytes) +
+        '(' + (ratio * 100).toFixed(1) + '%・' + u.count + '枚)';
+      storageBar.style.width = Math.min(ratio, 1) * 100 + '%';
+      storageEl.classList.toggle('cc-storage-warn', ratio >= 0.9);
+    }).catch(function () {
+      storageText.textContent = '画像の保存容量を取得できませんでした';
+      storageBar.style.width = '0';
+    });
+  }
+
   function openRegister() {
     [titleInput, genreInput, categoryInput, registrantInput, addressInput, memoInput].forEach(function (el) { el.value = ''; });
     slotFileInputs.forEach(function (el) { el.value = ''; });
     formImages = [null, null, null, null];
     registerError.textContent = '';
     renderImageSlots();
+    loadStorageUsage();
     registerBackdrop.style.display = 'flex';
     titleInput.focus();
   }
