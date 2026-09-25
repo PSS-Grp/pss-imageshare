@@ -19,6 +19,9 @@ const { DATABASE_URL, SITE_PASSWORD, SESSION_SECRET, SUPABASE_URL, SUPABASE_SERV
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'images';
 // 使用量表示の上限(MB)。Supabase の無料プランの Storage は 1GB。
 const STORAGE_LIMIT_MB = Number(process.env.STORAGE_LIMIT_MB) || 1024;
+const STORAGE_LIMIT_BYTES = STORAGE_LIMIT_MB * 1024 * 1024;
+// 使用量がこの割合に達したら新しい登録を受け付けない
+const STORAGE_BLOCK_RATIO = 0.95;
 const SESSION_HOURS = Number(process.env.SESSION_HOURS) || 720;
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -222,18 +225,28 @@ app.get('/api/groups', wrap(async (req, res) => {
   })));
 }));
 
-app.get('/api/storage-usage', wrap(async (req, res) => {
+async function getStorageUsage() {
   const { rows } = await pool.query(
     'SELECT COUNT(*)::int AS count, COALESCE(SUM(size), 0)::bigint AS used FROM group_images');
-  res.json({
+  const usedBytes = Number(rows[0].used);
+  return {
     count: rows[0].count,
-    usedBytes: Number(rows[0].used),
-    limitBytes: STORAGE_LIMIT_MB * 1024 * 1024,
-  });
+    usedBytes,
+    limitBytes: STORAGE_LIMIT_BYTES,
+    blockRatio: STORAGE_BLOCK_RATIO,
+    blocked: usedBytes >= STORAGE_LIMIT_BYTES * STORAGE_BLOCK_RATIO,
+  };
+}
+
+app.get('/api/storage-usage', wrap(async (req, res) => {
+  res.json(await getStorageUsage());
 }));
 
 app.post('/api/groups', express.json({ limit: '15mb' }), wrap(async (req, res) => {
   const group = parseGroupBody(req.body || {});
+  if ((await getStorageUsage()).blocked) {
+    throw new HttpError(409, `画像の保存容量が${STORAGE_BLOCK_RATIO * 100}%に達したため、新しく登録できません`);
+  }
   const client = await pool.connect();
   const uploaded = [];
   try {

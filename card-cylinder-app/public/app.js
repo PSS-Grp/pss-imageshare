@@ -472,8 +472,23 @@
     return Math.round(n / 1024) + ' KB';
   }
 
+  // 保存容量が上限の95%に達していたら登録ボタンを押せなくする(サーバー側でも同じ判定で断る)
+  var storageBlocked = false;
+
+  function updateRegisterSave() {
+    registerSave.disabled = storageBlocked;
+    registerSave.classList.toggle('cc-blocked', storageBlocked);
+    registerSave.textContent = '登録する';
+  }
+
   function loadStorageUsage() {
     api('GET', '/api/storage-usage').then(function (u) {
+      storageBlocked = !!u.blocked;
+      updateRegisterSave();
+      if (storageBlocked) {
+        registerError.textContent = '画像の保存容量が' + Math.round(u.blockRatio * 100) +
+          '%に達したため、新しく登録できません。不要なグループを削除してください。';
+      }
       var ratio = u.limitBytes ? u.usedBytes / u.limitBytes : 0;
       storageText.textContent = '画像の保存容量: ' + formatBytes(u.usedBytes) + ' / ' + formatBytes(u.limitBytes) +
         '(' + (ratio * 100).toFixed(1) + '%・' + u.count + '枚)';
@@ -530,10 +545,7 @@
       return loadGroups();
     }, function (err) {
       registerError.textContent = err.message;
-    }).then(function () {
-      registerSave.disabled = false;
-      registerSave.textContent = '登録する';
-    });
+    }).then(updateRegisterSave);
   });
 
   // ---- 絞り込み ----
