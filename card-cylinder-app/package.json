@@ -2,7 +2,7 @@
   "name": "card-cylinder-app",
   "version": "1.0.0",
   "private": true,
-  "description": "12枚のカードが円柱状に回転する画像グループ共有アプリ(Neon 保存・共通パスワードログイン)",
+  "description": "12枚のカードが円柱状に回転する画像グループ共有アプリ(Neon + Supabase Storage 保存・共通パスワードログイン)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -11,6 +11,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "pg": "^8.13.1"

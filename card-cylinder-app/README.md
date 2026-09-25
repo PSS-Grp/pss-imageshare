@@ -1,8 +1,8 @@
 # Card Cylinder(画像グループ管理付き・Web公開版)
 
 12枚のカードが円柱状に並んで回転する3D表示に、ログイン・画像グループの登録・絞り込み検索を
-つけた Web アプリです。データ(グループ情報と画像)は Neon(Postgres)に保存され、ブラウザを
-再読み込みしても消えません。
+つけた Web アプリです。グループ情報は Neon(Postgres)に、画像は Supabase Storage に保存され、
+ブラウザを再読み込みしても消えません。
 
 ## できること
 
@@ -25,6 +25,7 @@
 
 - Node.js 18以上(ローカルで動かす場合のみ)
 - Neon のプロジェクト(`pss-imageshare`)
+- Supabase のプロジェクト(画像の保存先。Storage だけを使います)
 - Render のアカウント(pss-attend と同じもの)
 
 ## 1. Neon の接続文字列を用意する
@@ -34,13 +35,23 @@ Neon のダッシュボードで `pss-imageshare` プロジェクトを開き、
 
 テーブルはサーバーが起動時に `schema.sql` を実行して自動で作ります。
 
+## 1-2. Supabase のキーを用意する
+
+Supabase のダッシュボードでプロジェクトを開き、「Project Settings」→「API」から次の2つをコピーします。
+
+- Project URL(`https://xxxx.supabase.co`)… `SUPABASE_URL`
+- `service_role` キー … `SUPABASE_SERVICE_ROLE_KEY`(サーバー専用。公開しないこと)
+
+画像用のバケット(既定名 `images`、`SUPABASE_BUCKET` で変更可)は、無ければサーバーが起動時に
+非公開バケットとして自動で作ります。画像はサーバー経由でのみ配信されるので、公開にする必要はありません。
+
 ## 2. ローカルで動作確認する(任意)
 
 ```bash
 cd card-cylinder-app
 npm install
 cp .env.example .env
-# .env を開いて DATABASE_URL・SITE_PASSWORD・SESSION_SECRET を書き換える
+# .env を開いて DATABASE_URL・SUPABASE_URL・SUPABASE_SERVICE_ROLE_KEY・SITE_PASSWORD・SESSION_SECRET を書き換える
 npm start
 ```
 
@@ -53,6 +64,7 @@ npm start
 1. Render のダッシュボードで「New +」→「Blueprint」を選び、`PSS-Grp/pss-imageshare` リポジトリを選択します。
 2. 入力を求められる環境変数を設定します。
    - `DATABASE_URL` … Neon の接続文字列
+   - `SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY` … Supabase の Project URL と service_role キー
    - `SITE_PASSWORD` … サイトに入るための共通パスワード
    - `SESSION_SECRET` は Render が自動生成します。
    - `SESSION_HOURS`(ログインの有効時間、既定は720=30日)を変えたい場合は、Environment タブで追加します。
@@ -63,7 +75,7 @@ npm start
 
 ```
 card-cylinder-app/
-├─ server.js        … Express サーバー(ログイン・API・画面配信)
+├─ server.js        … Express サーバー(ログイン・API・画面配信・画像の保存/配信)
 ├─ schema.sql       … データベースのテーブル定義(起動時に自動実行)
 ├─ package.json
 ├─ .env.example     … 環境変数のサンプル
@@ -86,9 +98,10 @@ card-cylinder-app/
 
 ## 注意点
 
-- 画像はブラウザ側で長辺900pxに縮小してから、Neon のテーブルにバイナリ(BYTEA)として保存しています。
-  画像が大量になってきたら、画像だけを別のストレージ(Cloudflare R2 や S3 など)に移して、
-  データベースには URL だけを持たせる方式に切り替えることをおすすめします。
+- 画像はブラウザ側で長辺900pxに縮小してから、Supabase Storage に `groups/グループID/スロット番号` の
+  名前で保存しています。Neon には画像の種類(MIME)だけを持たせています。グループを削除すると画像も消えます。
+- 以前の版(画像を Neon の BYTEA 列に保存していた版)の DB で起動すると、旧形式の画像行は削除されます
+  (グループ情報は残りますが、画像は登録し直しが必要です)。
 - ログインは「全員共通の1つのパスワード」方式です。`SESSION_SECRET` を変えると全員のログインが切れます。
 - Render の無料プランは、しばらくアクセスがないと休止します。休止後の最初のアクセスは表示まで
   数十秒かかることがあります。

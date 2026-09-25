@@ -5,8 +5,8 @@
 # 選択すると、このファイルの内容にもとづいてWebサービスが自動的に
 # 作成される。アプリ本体は card-cylinder-app/ にあるため rootDir で指定する。
 #
-# グループ情報・画像はすべて DATABASE_URL で指定する Neon（PostgreSQL）に
-# 保存するので、Renderの永続ディスクは不要（freeプランで動く）。
+# グループ情報は DATABASE_URL で指定する Neon（PostgreSQL）に、画像本体は
+# Supabase Storage に保存するので、Renderの永続ディスクは不要（freeプランで動く）。
 #------------------------------------------------
 
 services:
@@ -27,6 +27,11 @@ services:
       # sync: false のため値はリポジトリに保存されず、Blueprint適用時に
       # Renderから入力を求められる。
       - key: DATABASE_URL
+        sync: false
+      # Supabase の Project URL と service_role キー（画像の保存先）。
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       # サイトに入るための共通パスワード。
       - key: SITE_PASSWORD

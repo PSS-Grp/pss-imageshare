@@ -4,7 +4,7 @@
 // - 共通パスワード1つでのログイン(署名付き Cookie によるセッション)
 // - 画像グループの一覧・登録・削除 API と、画像の配信
 // - public/ 配下の画面(ログイン画面・カード表示画面)の配信
-// データはすべて Neon(Postgres)に保存する。
+// グループ情報は Neon(Postgres)に、画像本体は Supabase Storage に保存する。
 
 require('dotenv').config();
 
@@ -13,12 +13,16 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const { Pool } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 
-const { DATABASE_URL, SITE_PASSWORD, SESSION_SECRET } = process.env;
+const { DATABASE_URL, SITE_PASSWORD, SESSION_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'images';
 const SESSION_HOURS = Number(process.env.SESSION_HOURS) || 720;
 const PORT = Number(process.env.PORT) || 3000;
 
-for (const [key, value] of Object.entries({ DATABASE_URL, SITE_PASSWORD, SESSION_SECRET })) {
+for (const [key, value] of Object.entries({
+  DATABASE_URL, SITE_PASSWORD, SESSION_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+})) {
   if (!value) {
     console.error(`環境変数 ${key} が設定されていません(.env.example を参照)`);
     process.exit(1);
@@ -30,6 +34,28 @@ for (const [key, value] of Object.entries({ DATABASE_URL, SITE_PASSWORD, SESSION
 // プール側で切断を検知してもプロセスが落ちないよう error をログに出すだけにしておく。
 const pool = new Pool({ connectionString: DATABASE_URL, max: 5, idleTimeoutMillis: 30000 });
 pool.on('error', (err) => console.error('DB接続エラー:', err.message));
+
+// ---- 画像ストレージ ----
+// 画像は Supabase Storage の非公開バケットに「groups/グループID/スロット番号」で保存する。
+// サーバーだけが service_role キーで読み書きし、ブラウザへはログイン済みのときだけ中継して返す。
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+const bucket = () => supabase.storage.from(SUPABASE_BUCKET);
+const imagePath = (groupId, slot) => `groups/${groupId}/${slot}`;
+
+async function ensureBucket() {
+  const { error } = await supabase.storage.getBucket(SUPABASE_BUCKET);
+  if (!error) return;
+  const created = await supabase.storage.createBucket(SUPABASE_BUCKET, { public: false });
+  if (created.error) throw new Error(`バケット ${SUPABASE_BUCKET} を作成できません: ${created.error.message}`);
+}
+
+async function removeImages(paths) {
+  if (!paths.length) return;
+  const { error } = await bucket().remove(paths);
+  if (error) console.error('画像の削除に失敗しました:', paths, error.message);
+}
 
 // ---- セッション ----
 // Cookie の中身は「有効期限.署名」。署名は SESSION_SECRET を鍵にした HMAC なので、
@@ -178,6 +204,7 @@ app.get('/api/groups', wrap(async (req, res) => {
 app.post('/api/groups', express.json({ limit: '15mb' }), wrap(async (req, res) => {
   const group = parseGroupBody(req.body || {});
   const client = await pool.connect();
+  const uploaded = [];
   try {
     await client.query('BEGIN');
     const { rows } = await client.query(
@@ -185,15 +212,21 @@ app.post('/api/groups', express.json({ limit: '15mb' }), wrap(async (req, res) =
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
       [group.title, group.genre, group.category, group.registrant, group.address, group.memo]);
     const id = rows[0].id;
+    // 画像を先にストレージへ上げ、すべて成功したら DB を確定する
     for (const img of group.images) {
+      const key = imagePath(id, img.slot);
+      const { error } = await bucket().upload(key, img.data, { contentType: img.mime, upsert: true });
+      if (error) throw new Error(`画像のアップロードに失敗しました: ${error.message}`);
+      uploaded.push(key);
       await client.query(
-        'INSERT INTO group_images (group_id, slot, mime, data) VALUES ($1, $2, $3, $4)',
-        [id, img.slot, img.mime, img.data]);
+        'INSERT INTO group_images (group_id, slot, mime) VALUES ($1, $2, $3)',
+        [id, img.slot, img.mime]);
     }
     await client.query('COMMIT');
     res.status(201).json({ id });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
+    await removeImages(uploaded);
     throw err;
   } finally {
     client.release();
@@ -201,19 +234,28 @@ app.post('/api/groups', express.json({ limit: '15mb' }), wrap(async (req, res) =
 }));
 
 app.delete('/api/groups/:id', wrap(async (req, res) => {
-  const { rowCount } = await pool.query('DELETE FROM image_groups WHERE id = $1', [parseId(req.params.id)]);
-  if (!rowCount) throw new HttpError(404, '見つかりません');
+  const id = parseId(req.params.id);
+  const { rows } = await pool.query(
+    `WITH g AS (DELETE FROM image_groups WHERE id = $1 RETURNING id)
+     SELECT g.id, COALESCE(array_agg(i.slot) FILTER (WHERE i.slot IS NOT NULL), '{}') AS slots
+       FROM g LEFT JOIN group_images i ON i.group_id = g.id
+      GROUP BY g.id`, [id]);
+  if (!rows.length) throw new HttpError(404, '見つかりません');
+  await removeImages(rows[0].slots.map((slot) => imagePath(id, slot)));
   res.status(204).end();
 }));
 
 app.get('/api/groups/:id/images/:slot', wrap(async (req, res) => {
+  const id = parseId(req.params.id);
+  const slot = parseSlot(req.params.slot);
   const { rows } = await pool.query(
-    'SELECT mime, data FROM group_images WHERE group_id = $1 AND slot = $2',
-    [parseId(req.params.id), parseSlot(req.params.slot)]);
+    'SELECT mime FROM group_images WHERE group_id = $1 AND slot = $2', [id, slot]);
   if (!rows.length) throw new HttpError(404, '見つかりません');
+  const { data, error } = await bucket().download(imagePath(id, slot));
+  if (error) throw new Error(`画像を取得できません: ${error.message}`);
   // 登録後に画像が書き換わることはない(id は再利用されない)ので長めにキャッシュさせる
   res.set('Cache-Control', 'private, max-age=31536000, immutable');
-  res.type(rows[0].mime).send(rows[0].data);
+  res.type(rows[0].mime).send(Buffer.from(await data.arrayBuffer()));
 }));
 
 app.use(express.static(PUBLIC_DIR));
@@ -229,6 +271,7 @@ app.use((err, req, res, next) => {
 // ---- 起動 ----
 (async () => {
   await pool.query(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+  await ensureBucket();
   app.listen(PORT, () => console.log(`Card Cylinder: http://localhost:${PORT}`));
 })().catch((err) => {
   console.error('起動に失敗しました:', err);

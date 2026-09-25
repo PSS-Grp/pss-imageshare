@@ -15,11 +15,21 @@ CREATE TABLE IF NOT EXISTS image_groups (
 );
 
 -- グループごとの画像(最大4枚)。slot 0 がカードのサムネイルになる。
--- 画像はブラウザ側で縮小済みのものを、バイナリ(BYTEA)のまま保存する。
+-- 画像本体は Supabase Storage の「groups/グループID/スロット番号」に置き、ここには種類だけを持つ。
 CREATE TABLE IF NOT EXISTS group_images (
   group_id  INTEGER  NOT NULL REFERENCES image_groups(id) ON DELETE CASCADE,
   slot      SMALLINT NOT NULL CHECK (slot BETWEEN 0 AND 3),
   mime      TEXT     NOT NULL,
-  data      BYTEA    NOT NULL,
   PRIMARY KEY (group_id, slot)
 );
+
+-- 以前は画像を data 列(BYTEA)に保存していた。その列が残っている DB では、
+-- 旧形式の画像行を消して列を削除する(ストレージへの移行はしない)。
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'group_images' AND column_name = 'data') THEN
+    DELETE FROM group_images;
+    ALTER TABLE group_images DROP COLUMN data;
+  END IF;
+END $$;
