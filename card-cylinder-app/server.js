@@ -156,6 +156,9 @@ app.disable('x-powered-by');
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
+// ログイン時とログアウト時で属性をそろえないと、ブラウザが同じ Cookie とみなさず消えないことがある
+const cookieOptions = (req) => ({ httpOnly: true, sameSite: 'lax', secure: req.secure, path: '/' });
+
 app.get('/login', (req, res) => {
   if (isValidToken(readCookie(req, COOKIE_NAME))) return res.redirect('/');
   res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
@@ -166,17 +169,12 @@ app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
     // 総当たりを遅らせるため、失敗時は少し待ってから返す
     return setTimeout(() => res.redirect('/login?error=1'), 800);
   }
-  res.cookie(COOKIE_NAME, issueToken(), {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: req.secure,
-    maxAge: SESSION_MS,
-  });
+  res.cookie(COOKIE_NAME, issueToken(), { ...cookieOptions(req), maxAge: SESSION_MS });
   res.redirect('/');
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie(COOKIE_NAME);
+  res.clearCookie(COOKIE_NAME, cookieOptions(req));
   res.redirect('/login');
 });
 
