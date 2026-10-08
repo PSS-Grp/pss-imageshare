@@ -352,10 +352,26 @@
     return document.fullscreenElement || document.webkitFullscreenElement || null;
   }
 
+  // 全画面のときは、通常時のステージ(960×680)に対する画面の大きさの比率で
+  // カードと影をまとめて拡大する(縦横のうち余裕の少ない方に合わせる)
+  var BASE_STAGE_W = 960, BASE_STAGE_H = 680;
+  var perspEl = document.querySelector('.cc-persp');
+  var shadowEl = document.querySelector('.cc-shadow');
+
+  function applyStageScale() {
+    var k = 1;
+    if (fullscreenElement() === stage) {
+      k = Math.max(1, Math.min(stage.clientWidth / BASE_STAGE_W, stage.clientHeight / BASE_STAGE_H));
+    }
+    perspEl.style.transform = k === 1 ? '' : 'scale(' + k + ')';
+    shadowEl.style.transform = 'translate(-50%,-50%)' + (k === 1 ? '' : ' scale(' + k + ')');
+  }
+
   function updateFullscreenBtn() {
     var on = fullscreenElement() === stage;
     fullscreenBtn.textContent = on ? '全画面を終了' : '全画面';
     fullscreenBtn.classList.toggle('cc-active', on);
+    applyStageScale();
   }
 
   if (canFullscreen) {
@@ -372,6 +388,7 @@
     // Esc キーなどボタン以外で全画面が解除された場合も表示を合わせる
     document.addEventListener('fullscreenchange', updateFullscreenBtn);
     document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
+    window.addEventListener('resize', applyStageScale);
   }
 
   // ---- ドラッグ / スワイプで手動回転(モーダルや詳細画面が開いている間は無効) ----
