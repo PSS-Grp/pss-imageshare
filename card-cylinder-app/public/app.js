@@ -5,7 +5,7 @@
   var ACCENT = '#8a1f2f';
   var ACCENT_DEEP = '#430e18';
   var GOLD = '#d9b872';
-  var TILT_X = 12;
+  var TILT_X = 8;
   var SPEED = 7; // deg/秒
   var CARD_COUNT = 12;
   var DEFAULT_HEADLINE = '1〜12 のカードを円柱状に配置';
