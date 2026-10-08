@@ -357,6 +357,8 @@
   var BASE_STAGE_W = 960, BASE_STAGE_H = 680;
   var perspEl = document.querySelector('.cc-persp');
   var shadowEl = document.querySelector('.cc-shadow');
+  var titleEl = document.querySelector('.cc-title');
+  var BASE_TITLE_TOP = 34; // .cc-title の top と同じ値
 
   function applyStageScale() {
     var k = 1;
@@ -365,6 +367,19 @@
     }
     perspEl.style.transform = k === 1 ? '' : 'scale(' + k + ')';
     shadowEl.style.transform = 'translate(-50%,-50%)' + (k === 1 ? '' : ' scale(' + k + ')');
+
+    // タイトルも同じ比率で拡大し、上端からの位置も合わせる(カードとの間隔を通常時と同じ比率に保つ)。
+    // 拡大後の幅がステージ幅に収まるよう、左右の余白で拡大前の幅を 1/k に縮めておく。
+    if (k === 1) {
+      titleEl.style.top = titleEl.style.left = titleEl.style.right = '';
+      titleEl.style.transform = titleEl.style.transformOrigin = '';
+    } else {
+      var side = (stage.clientWidth * (1 - 1 / k)) / 2;
+      titleEl.style.top = (BASE_TITLE_TOP * k) + 'px';
+      titleEl.style.left = titleEl.style.right = side + 'px';
+      titleEl.style.transformOrigin = 'top center';
+      titleEl.style.transform = 'scale(' + k + ')';
+    }
   }
 
   function updateFullscreenBtn() {
