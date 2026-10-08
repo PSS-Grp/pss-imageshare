@@ -343,6 +343,37 @@
     toggleBtn.textContent = playing ? '一時停止' : '再生する';
   });
 
+  // ---- 全画面表示(ステージごと全画面にするので、登録・絞り込み・詳細画面もそのまま使える) ----
+  // Fullscreen API が使えないブラウザ(iPhone の Safari など)ではボタンを出さない
+  var fullscreenBtn = $('ccFullscreen');
+  var canFullscreen = !!(stage.requestFullscreen || stage.webkitRequestFullscreen);
+
+  function fullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  function updateFullscreenBtn() {
+    var on = fullscreenElement() === stage;
+    fullscreenBtn.textContent = on ? '全画面を終了' : '全画面';
+    fullscreenBtn.classList.toggle('cc-active', on);
+  }
+
+  if (canFullscreen) {
+    fullscreenBtn.hidden = false;
+    fullscreenBtn.addEventListener('click', function () {
+      if (fullscreenElement()) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else {
+        var req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+        var p = req.call(stage);
+        if (p && p.catch) p.catch(function () { showToast('全画面表示にできませんでした'); });
+      }
+    });
+    // Esc キーなどボタン以外で全画面が解除された場合も表示を合わせる
+    document.addEventListener('fullscreenchange', updateFullscreenBtn);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
+  }
+
   // ---- ドラッグ / スワイプで手動回転(モーダルや詳細画面が開いている間は無効) ----
   // ボタンをクリックした時は setPointerCapture を奪わないようにし、カードのクリック
   // (画像グループの選択)は移動量の少ないポインター操作として stage 側でまとめて判定する。

@@ -14,6 +14,8 @@
     background:radial-gradient(ellipse at 50% 26%, #2c2419 0%, #16120d 58%, #0a0806 100%);
     touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
   .cc-stage.cc-dragging{cursor:grabbing;}
+  .cc-stage:fullscreen{width:100vw;height:100vh;max-width:none;}
+  .cc-stage:-webkit-full-screen{width:100vw;height:100vh;max-width:none;}
   .cc-title{position:absolute;top:34px;left:0;right:0;text-align:center;color:#e9dcc0;}
   .cc-eyebrow{font-size:12px;letter-spacing:0.4em;color:#b79a63;text-transform:uppercase;}
   .cc-headline{font-size:21px;margin-top:6px;color:#f3e7cf;font-weight:500;}
@@ -124,6 +126,7 @@
     <button class="cc-btn cc-label" id="ccToggle">一時停止</button>
     <button class="cc-btn cc-label" id="ccRegisterOpen">画像を登録</button>
     <button class="cc-btn cc-label" id="ccFilterOpen">絞り込み</button>
+    <button class="cc-btn cc-label" id="ccFullscreen" hidden>全画面</button>
   </div>
 
   <div class="cc-toast cc-label" id="ccToast" hidden></div>
