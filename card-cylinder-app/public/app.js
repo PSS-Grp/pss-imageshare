@@ -209,7 +209,7 @@
 
   // ---- カードへのグループ割り当て ----
   // 12件以下: カード i にグループ (i mod 件数) を繰り返し表示する。
-  // 13件以上: 最初はグループ 1〜12 を載せ、各カードが基準の0°(円柱の奥側)を通過する
+  // 13件以上: 最初はグループ 1〜12 を載せ、各カードが 00:00 の位置(円柱の奥側)を通過する
   //           たびに、まだ載っていない次の順番のグループへ差し替える(コンベア式)。
   var nextGroupIndex = 0;
 
@@ -242,13 +242,14 @@
     nextGroupIndex = (nextGroupIndex + 1) % n;
   }
 
-  // 正方向の回転で 360°→0° をまたいだカードを差し替える
+  // 正方向の回転で差し替え位置(00:00 の位置 = swapWorld)をまたいだカードを差し替える
   function checkConveyor(c, worldMod) {
+    var rel = (worldMod - swapWorld + 360) % 360;
     if (c.prevWorld !== null) {
-      var delta = ((worldMod - c.prevWorld + 540) % 360) - 180;
-      if (delta > 0 && worldMod < c.prevWorld) advanceCard(c);
+      var delta = ((rel - c.prevWorld + 540) % 360) - 180;
+      if (delta > 0 && rel < c.prevWorld) advanceCard(c);
     }
-    c.prevWorld = worldMod;
+    c.prevWorld = rel;
   }
 
   // ---- 06:30(195°)⇄05:30(165°) の付近で「見た目の向き」だけ180°補正する ----
@@ -271,6 +272,7 @@
   var entryLo = 360 - exitHi;
   var entryHi = 360 - exitLo;
   var worldTarget180 = worldForClock(180);
+  var swapWorld = worldForClock(0); // コンベア式の差し替え位置(00:00 = 円柱の奥側)
 
   function twistFor(worldDeg) {
     var wm = worldDeg % 360;
